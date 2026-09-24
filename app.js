@@ -114,25 +114,23 @@ function initCityMap() {
     center: [47, 49], // MapLibre uses [longitude, latitude].
     zoom: 2,
     minZoom: 1,
-    maxZoom: 18,
+    maxZoom: 4,
     renderWorldCopies: true,
-    style: {
-      version: 8,
-      sources: {
-        osm: {
-          type: 'raster',
-          tiles: ['https://tile.openstreetmap.org/{z}/{x}/{y}.png'],
-          tileSize: 256,
-          attribution: '&copy; OpenStreetMap contributors'
-        }
-      },
-      layers: [{ id: 'osm', type: 'raster', source: 'osm' }]
-    }
+    style: 'https://tiles.openfreemap.org/styles/positron'
   });
   cityMap.scrollZoom.disable();
   cityMap.addControl(new maplibregl.NavigationControl(), 'top-right');
 
   cityMap.on('load', () => {
+    // Borders are separate vector layers in this style. Hide them before adding city data.
+    cityMap.getStyle().layers.forEach(layer => {
+      const sourceLayer = layer['source-layer'] || '';
+      if (layer.type === 'line' &&
+          (sourceLayer === 'boundary' || /boundary|admin/i.test(layer.id))) {
+        cityMap.setLayoutProperty(layer.id, 'visibility', 'none');
+      }
+    });
+
     cityMap.addSource('cities', {
       type: 'geojson',
       data: { type: 'FeatureCollection', features: [] }
@@ -212,7 +210,7 @@ function renderCityMap(points) {
     points.forEach(p => bounds.extend([p.lng, p.lat]));
     cityMap.fitBounds(bounds, { padding: 24, maxZoom: 4, duration: 0 });
   } else if (points.length === 1) {
-    cityMap.jumpTo({ center: [points[0].lng, points[0].lat], zoom: 5 });
+    cityMap.jumpTo({ center: [points[0].lng, points[0].lat], zoom: 4 });
   } else {
     cityMap.jumpTo({ center: [47, 49], zoom: 2 });
   }
