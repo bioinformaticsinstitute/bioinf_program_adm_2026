@@ -328,7 +328,7 @@ function renderKpis() {
   document.getElementById('kpiCities').textContent = formatNumber(all.city_points.length);
   document.getElementById('kpiPrior').textContent = formatNumber(prior ? prior.value : 0);
   document.getElementById('kpiCompetition').textContent = new Intl.NumberFormat('ru-RU', { minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(competition);
-  document.getElementById('kpiCourse170').textContent = formatNumber(course170);
+  document.getElementById('kpiCourse170').textContent = formatNumber(224);
   document.getElementById('kpiTests').textContent = formatNumber(k.test_completed_unique);
   document.getElementById('kpiAllowed').textContent = formatNumber(k.interview_allowed_unique);
   document.getElementById('courseN').textContent = formatNumber(k.course_scores_available);
