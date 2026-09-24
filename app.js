@@ -10,7 +10,8 @@ const COLORS = {
 const charts = {};
 let DATA = null;
 let cityMap = null;
-let cityLayer = null;
+let cityPopup = null;
+let pendingCityPoints = [];
 
 Chart.defaults.font.family = 'Open Sans, Arial, sans-serif';
 Chart.defaults.color = '#596174';
@@ -108,61 +109,114 @@ function renderStages() {
 }
 
 function initCityMap() {
-  cityMap = L.map('cityMap', {
-    zoomControl: true,
-    scrollWheelZoom: false,
+  cityMap = new maplibregl.Map({
+    container: 'cityMap',
+    center: [47, 49], // MapLibre uses [longitude, latitude].
+    zoom: 2,
     minZoom: 1,
-    worldCopyJump: true
-  }).setView([49, 47], 2);
-
-  L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
     maxZoom: 18,
-    attribution: '&copy; OpenStreetMap contributors'
-  }).addTo(cityMap);
+    renderWorldCopies: true,
+    style: {
+      version: 8,
+      sources: {
+        osm: {
+          type: 'raster',
+          tiles: ['https://tile.openstreetmap.org/{z}/{x}/{y}.png'],
+          tileSize: 256,
+          attribution: '&copy; OpenStreetMap contributors'
+        }
+      },
+      layers: [{ id: 'osm', type: 'raster', source: 'osm' }]
+    }
+  });
+  cityMap.scrollZoom.disable();
+  cityMap.addControl(new maplibregl.NavigationControl(), 'top-right');
 
-  cityLayer = L.layerGroup().addTo(cityMap);
+  cityMap.on('load', () => {
+    cityMap.addSource('cities', {
+      type: 'geojson',
+      data: { type: 'FeatureCollection', features: [] }
+    });
+    cityMap.addLayer({
+      id: 'city-circles',
+      type: 'circle',
+      source: 'cities',
+      paint: {
+        'circle-radius': ['get', 'radius'],
+        'circle-color': COLORS.blue,
+        'circle-opacity': 0.74,
+        'circle-stroke-color': '#FFFFFF',
+        'circle-stroke-width': 1.4
+      }
+    });
 
-  // Leaflet needs to recalculate the viewport after responsive layout/zoom changes.
+    function showCity(event) {
+      const feature = event.features && event.features[0];
+      if (!feature) return;
+      const content = document.createElement('div');
+      const name = document.createElement('strong');
+      name.textContent = feature.properties.city;
+      content.append(name, document.createElement('br'),
+        document.createTextNode(`${formatNumber(feature.properties.count)} чел.`));
+      if (cityPopup) cityPopup.remove();
+      cityPopup = new maplibregl.Popup({ closeButton: false, offset: 12, className: 'city-tooltip' })
+        .setLngLat(feature.geometry.coordinates)
+        .setDOMContent(content)
+        .addTo(cityMap);
+    }
+
+    cityMap.on('mouseenter', 'city-circles', event => {
+      cityMap.getCanvas().style.cursor = 'pointer';
+      showCity(event);
+    });
+    cityMap.on('mouseleave', 'city-circles', () => {
+      cityMap.getCanvas().style.cursor = '';
+      if (cityPopup) cityPopup.remove();
+      cityPopup = null;
+    });
+    cityMap.on('click', 'city-circles', showCity); // Also works on touch devices.
+    renderCityMap(pendingCityPoints);
+  });
+
   if (window.ResizeObserver) {
     const mapEl = document.getElementById('cityMap');
-    const ro = new ResizeObserver(() => {
-      if (cityMap) window.requestAnimationFrame(() => cityMap.invalidateSize(false));
-    });
+    const ro = new ResizeObserver(() => window.requestAnimationFrame(() => cityMap.resize()));
     ro.observe(mapEl);
   }
-  window.addEventListener('resize', () => {
-    if (cityMap) window.requestAnimationFrame(() => cityMap.invalidateSize(false));
-  }, { passive: true });
+  window.addEventListener('resize', () => window.requestAnimationFrame(() => cityMap.resize()), { passive: true });
 }
 
 function renderCityMap(points) {
+  pendingCityPoints = points;
   if (!cityMap) initCityMap();
-  cityLayer.clearLayers();
-  const bounds = [];
+  const source = cityMap.getSource('cities');
+  if (!source) return; // The load handler renders the latest selection.
 
-  points.forEach(p => {
-    const radius = Math.min(32, 4 + Math.sqrt(p.count) * 2.2);
-    const marker = L.circleMarker([p.lat, p.lng], {
-      radius,
-      color: '#FFFFFF',
-      weight: 1.4,
-      fillColor: COLORS.blue,
-      fillOpacity: .74
-    });
-    marker.bindTooltip(`<strong>${p.city}</strong><br>${formatNumber(p.count)} чел.`, {
-      direction: 'top',
-      className: 'city-tooltip'
-    });
-    marker.addTo(cityLayer);
-    bounds.push([p.lat, p.lng]);
+  if (cityPopup) cityPopup.remove();
+  cityPopup = null;
+  source.setData({
+    type: 'FeatureCollection',
+    features: points.map(p => ({
+      type: 'Feature',
+      geometry: { type: 'Point', coordinates: [p.lng, p.lat] },
+      properties: {
+        city: p.city,
+        count: p.count,
+        radius: Math.min(32, 4 + Math.sqrt(p.count) * 2.2)
+      }
+    }))
   });
 
-  if (bounds.length > 1) {
-    cityMap.fitBounds(bounds, { padding: [24, 24], maxZoom: 4 });
-  } else if (bounds.length === 1) {
-    cityMap.setView(bounds[0], 5);
+  if (points.length > 1) {
+    const bounds = new maplibregl.LngLatBounds();
+    points.forEach(p => bounds.extend([p.lng, p.lat]));
+    cityMap.fitBounds(bounds, { padding: 24, maxZoom: 4, duration: 0 });
+  } else if (points.length === 1) {
+    cityMap.jumpTo({ center: [points[0].lng, points[0].lat], zoom: 5 });
+  } else {
+    cityMap.jumpTo({ center: [47, 49], zoom: 2 });
   }
-  setTimeout(() => cityMap.invalidateSize(), 0);
+  window.requestAnimationFrame(() => cityMap.resize());
 }
 
 function subtractSeries(allSeries, subsetSeries) {
