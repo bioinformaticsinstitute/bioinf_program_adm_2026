@@ -1,0 +1,169 @@
+<!doctype html>
+<html lang="ru">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="description" content="Итоги набора на программу переподготовки «Биоинформатика для биологов», 2026/27" />
+  <title>Итоги набора 2026/27 — Институт биоинформатики и биостатистики</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Open+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIINfQ3ynI3ZBeqZfGf0gMZIRrqB8BwkzNU=" crossorigin="" />
+  <link rel="stylesheet" href="leaflet-fallback.css?v=20260816-3" />
+  <link rel="stylesheet" href="styles.css?v=20260816-3" />
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.7/dist/chart.umd.min.js" defer></script>
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin="" defer></script>
+  <script src="app.js?v=20260816-3" defer></script>
+</head>
+<body>
+  <header class="hero">
+    <div class="hero-inner">
+      <div class="brand">
+        <img src="assets/logo.png?v=20260816-3" class="brand-logo" alt="Логотип Института биоинформатики и биостатистики" />
+        <div>
+          <div class="brand-name">ИНСТИТУТ БИОИНФОРМАТИКИ И БИОСТАТИСТИКИ</div>
+          <div class="brand-subtitle">Набор 2026/27</div>
+        </div>
+      </div>
+      <div class="hero-copy">
+        <p class="eyebrow hero-eyebrow">ИТОГИ НАБОРА</p>
+        <h1>Итоги набора на программу переподготовки «Биоинформатика для биологов»</h1>
+      </div>
+    </div>
+  </header>
+
+  <main class="container">
+    <section class="section" aria-labelledby="overview-title">
+      <div class="section-heading compact-heading">
+        <div>
+          <p class="eyebrow blue">ИТОГИ НАБОРА</p>
+          <h2 id="overview-title">Основные показатели</h2>
+        </div>
+      </div>
+
+      <div class="kpi-grid">
+        <article class="kpi-card"><strong id="kpiApplications">—</strong><span>Заявок</span></article>
+        <article class="kpi-card"><strong id="kpiCities">—</strong><span>Городов</span></article>
+        <article class="kpi-card"><strong id="kpiPrior">—</strong><span>Поступают<br>не в первый раз</span></article>
+        <article class="kpi-card highlight"><strong id="kpiCompetition">—</strong><span>человека<br>на место</span></article>
+        <article class="kpi-card"><strong id="kpiCourse170">—</strong><span>Набрали 170 баллов<br>на вступительном курсе</span></article>
+        <article class="kpi-card"><strong id="kpiTests">—</strong><span>Участвовали<br>в тестировании</span></article>
+        <article class="kpi-card"><strong id="kpiAllowed">—</strong><span>Допущены до<br>собеседования</span></article>
+      </div>
+
+      <article class="panel stages-panel">
+        <div class="panel-title">
+          <h3>Этапы поступления</h3>
+        </div>
+        <div id="stageFlow" class="stage-flow" aria-label="Этапы поступления"></div>
+      </article>
+    </section>
+
+    <section class="section" aria-labelledby="cohort-title">
+      <div class="section-heading cohort-heading">
+        <div>
+          <p class="eyebrow blue">АБИТУРИЕНТЫ</p>
+          <h2 id="cohort-title">Города и профиль заявителей</h2>
+        </div>
+        <div class="cohort-tools">
+          <div class="cohort-summary">Число заявителей: <strong id="cohortN">—</strong></div>
+          <div class="cohort-control">
+            <label for="cohortSelect">Собеседование</label>
+            <select id="cohortSelect">
+              <option value="all">Все</option>
+              <option value="allowed">Допуск</option>
+              <option value="not_allowed">Недопуск</option>
+            </select>
+          </div>
+        </div>
+      </div>
+
+      <div class="cohort-layout">
+        <article class="panel map-panel">
+          <div class="panel-title map-title-row">
+            <div><h3>Города</h3></div>
+            <div class="map-legend"><span class="legend-dot"></span> число заявителей</div>
+          </div>
+          <div id="cityMap" class="city-map" aria-label="Интерактивная карта городов заявителей"></div>
+        </article>
+
+        <div class="side-stack">
+          <article class="panel side-panel">
+            <div class="panel-title"><h3>Поступление</h3></div>
+            <div class="chart-wrap side-chart prior-chart"><canvas id="priorChart"></canvas></div>
+          </article>
+          <article class="panel side-panel">
+            <div class="panel-title"><h3>Текущий учебный статус</h3></div>
+            <div class="chart-wrap side-chart"><canvas id="studyChart"></canvas></div>
+          </article>
+          <article class="panel side-panel">
+            <div class="panel-title"><h3>Год выпуска</h3></div>
+            <div class="chart-wrap side-chart"><canvas id="gradChart"></canvas></div>
+          </article>
+        </div>
+      </div>
+    </section>
+
+    <section class="section exam-section" aria-labelledby="exam-title">
+      <div class="section-heading compact-heading">
+        <div>
+          <p class="eyebrow blue">ВСТУПИТЕЛЬНЫЕ ИСПЫТАНИЯ</p>
+          <h2 id="exam-title">Вступительный курс и тестирование</h2>
+        </div>
+      </div>
+
+      <article class="panel course-panel">
+        <div class="panel-title">
+          <h3>Вступительный курс</h3>
+          <p>Распределение итогового балла, n = <span id="courseN">—</span>.</p>
+        </div>
+        <div class="chart-wrap course-chart"><canvas id="courseChart"></canvas></div>
+      </article>
+
+      <article class="panel testing-panel">
+        <div class="testing-header">
+          <div class="panel-title testing-title"><h3>Результаты тестирования</h3></div>
+          <div class="variant-control">
+            <span class="variant-label">Вариант теста</span>
+            <div class="segmented" role="group" aria-label="Вариант теста">
+              <button type="button" class="segment active" data-variant="all">Все</button>
+              <button type="button" class="segment" data-variant="v1">1</button>
+              <button type="button" class="segment" data-variant="v2">2</button>
+            </div>
+          </div>
+        </div>
+
+        <div class="testing-kpis">
+          <div class="testing-kpi"><span>Участвовали в тестировании</span><strong id="testVariantN">—</strong></div>
+          <div class="testing-kpi"><span>средний балл</span><strong><span id="testMean">—</span><small> / 34</small></strong></div>
+          <div class="testing-kpi"><span>проходной балл</span><strong><span id="testPassing">—</span><small> / 34</small></strong></div>
+        </div>
+
+        <div class="grid-2 testing-charts">
+          <div class="subpanel">
+            <div class="subpanel-heading">
+              <h4>Результаты тестирования</h4>
+              <span id="testVariantCaption">Все варианты</span>
+            </div>
+            <div class="chart-wrap test-distribution"><canvas id="testScoreChart"></canvas></div>
+          </div>
+          <div class="subpanel emphasis-subpanel">
+            <div class="subpanel-heading">
+              <h4>Правильно решенные задачи</h4>
+              <span>*приведены медианные значения</span>
+            </div>
+            <div class="chart-wrap block-chart"><canvas id="blockChart"></canvas></div>
+          </div>
+        </div>
+      </article>
+    </section>
+  </main>
+
+  <footer>
+    <div class="container footer-inner">
+      <span>Институт биоинформатики и биостатистики · набор 2026/27</span>
+      <span>Биоинформатика для биологов</span>
+    </div>
+  </footer>
+</body>
+</html>
